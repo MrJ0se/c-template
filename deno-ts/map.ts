@@ -1,0 +1,1 @@
+export const map = ["CMakeLists.txt","common.cmake","include\\ctemplate.h","include\\_lib.h","source\\ctemplate.cpp","source\\ss","test\\CMakeLists.txt","test\\source\\main.cpp"]
