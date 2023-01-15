@@ -1,25 +1,31 @@
 import * as path from "https://deno.land/std@0.154.0/path/mod.ts"
-import { C } from "./deps.ts";
-
-const is_a_commit = Deno.args.find((x)=>x=='commit') != undefined;
 
 function relativePath(x:string) {
 	return path.fromFileUrl(new URL(x, import.meta.url)).replace(/^[\\\/]([A-Z]:[\\\/])/g, (_,b)=>b)
 }
 
 //exclude these paths
+function arrayIfExist(xrelative:string, func:(data:string)=>string[] ):string[] {
+	try {
+		const data = Deno.readFileSync(relativePath(xrelative))
+		return func(new TextDecoder().decode(data));
+	} catch(_) {
+		return [];
+	}
+
+}
 const filter = [
-	...(JSON.parse(new TextDecoder().decode(
-		Deno.readFileSync(relativePath('../.vscode/settings.json'))
-	)) as {"deno.enablePaths":string[]}) ["deno.enablePaths"],
-	...(new TextDecoder().decode(
-		Deno.readFileSync(relativePath('../.gitignore'))
-	)).replaceAll('\r\n','\n').split('\n').map((x)=>{
-		x = x.trim();
-		if (x.startsWith('\\')||x.startsWith('/'))
-			x = x.substring(1);
-		return x;
-	}).filter((x)=>x!=""&&!x.startsWith('#')),
+	...arrayIfExist('../.vscode/settings.json', (data)=>{
+		return JSON.parse(data)['deno.enablePaths']
+	}),
+	...arrayIfExist('../.gitignore', (data)=>{
+		return data.replaceAll('\r\n','\n').split('\n').map((x)=>{
+			x = x.trim();
+			if (x.startsWith('\\')||x.startsWith('/'))
+				x = x.substring(1);
+			return x;
+		}).filter((x)=>x!=""&&!x.startsWith('#'))
+	}),
 	".vscode",
 	".git",
 	".gitattributes",
